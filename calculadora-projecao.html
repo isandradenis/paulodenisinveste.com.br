@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Projeção Patrimonial</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: #1e2330;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --green: #22c55e;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #3b82f6;
+    --purple: #a78bfa;
+    --red: #f87171;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 40% at 10% 0%, rgba(201,168,76,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 100%, rgba(34,197,94,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5.5vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  h1 .highlight {
+    color: var(--gold);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Mode Selection Screen ── */
+  .mode-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .mode-question {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 8px;
+    max-width: 560px;
+  }
+
+  .mode-sub {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .mode-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  @media (max-width: 600px) {
+    .mode-cards { grid-template-columns: 1fr; }
+  }
+
+  .mode-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px;
+    cursor: pointer;
+    transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s, background 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mode-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 18px;
+  }
+
+  .mode-card.mode-tempo::before {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.1), transparent);
+  }
+
+  .mode-card.mode-valor::before {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34,197,94,0.1), transparent);
+  }
+
+  .mode-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .mode-card.mode-tempo:hover {
+    border-color: var(--gold);
+    box-shadow: 0 12px 40px rgba(201,168,76,0.15);
+  }
+
+  .mode-card.mode-tempo:hover::before { opacity: 1; }
+
+  .mode-card.mode-valor:hover {
+    border-color: var(--green);
+    box-shadow: 0 12px 40px rgba(34,197,94,0.12);
+  }
+
+  .mode-card.mode-valor:hover::before { opacity: 1; }
+
+  .mode-card-icon {
+    font-size: 36px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .mode-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .mode-card.mode-tempo .mode-card-title { color: var(--gold-light); }
+  .mode-card.mode-valor .mode-card-title { color: #6ee7b7; }
+
+  .mode-card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .mode-card-example {
+    margin-top: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .mode-card.mode-tempo .mode-card-example {
+    border-color: rgba(201,168,76,0.2);
+    color: rgba(201,168,76,0.7);
+  }
+
+  .mode-card.mode-valor .mode-card-example {
+    border-color: rgba(34,197,94,0.2);
+    color: rgba(34,197,94,0.7);
+  }
+
+  .mode-arrow {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 18px;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .mode-card:hover .mode-arrow { opacity: 1; transform: translateX(0); }
+  .mode-card.mode-tempo .mode-arrow { color: var(--gold); }
+  .mode-card.mode-valor .mode-arrow { color: var(--green); }
+
+  /* ── Calculator Screens (hidden initially) ── */
+  .calc-screen {
+    display: none;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .calc-screen.active { display: block; }
+
+  /* ── Back button ── */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 32px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .back-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── Main layout ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 820px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+
+  .section-label.green { color: var(--green); }
+
+  /* ── Form fields ── */
+  .field { margin-bottom: 20px; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .input-wrap { position: relative; }
+
+  .prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  .percent-suffix {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  .suffix-text {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    padding: 12px 14px 12px 36px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+
+  input[type="number"].with-suffix { padding-right: 36px; padding-left: 14px; }
+  input[type="number"].no-prefix   { padding-left: 14px; }
+
+  /* Green focus for mode B */
+  .green-mode input[type="number"]:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+  }
+
+  .green-mode .prefix { color: var(--green); }
+  .green-mode .percent-suffix { color: var(--green); }
+
+  .toggle-group {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .toggle-group label {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    padding: 11px 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+    transition: all 0.2s;
+    letter-spacing: 0;
+  }
+
+  .toggle-group input[type="radio"] { display: none; }
+
+  .toggle-group input[type="radio"]:checked + label {
+    background: var(--gold);
+    color: #0a0c0f;
+    font-weight: 600;
+  }
+
+  .green-mode .toggle-group input[type="radio"]:checked + label {
+    background: var(--green);
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 22px 0;
+  }
+
+  .btn-calc {
+    width: 100%;
+    background: var(--gold);
+    color: #0a0c0f;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(201,168,76,0.2);
+  }
+
+  .btn-calc:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(201,168,76,0.3);
+  }
+
+  .btn-calc.green-btn {
+    background: var(--green);
+    box-shadow: 0 4px 24px rgba(34,197,94,0.2);
+  }
+
+  .btn-calc.green-btn:hover {
+    background: #4ade80;
+    box-shadow: 0 8px 32px rgba(34,197,94,0.3);
+  }
+
+  .btn-calc:active { transform: translateY(0); }
+
+  /* ── Results panel placeholder ── */
+  .results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 20px;
+    color: var(--muted);
+    text-align: center;
+    gap: 12px;
+  }
+
+  .empty-icon { font-size: 48px; opacity: 0.25; }
+  .empty-state p { font-size: 14px; max-width: 280px; line-height: 1.7; }
+
+  /* ── Mode badge on calc screen ── */
+  .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+
+  .mode-badge.gold  { background: rgba(201,168,76,0.12); color: var(--gold);  border: 1px solid rgba(201,168,76,0.3); }
+  .mode-badge.green { background: rgba(34,197,94,0.12);  color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+
+  .hidden { display: none !important; }
+
+  /* ── Section card header ── */
+  .section-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* ── Result hero ── */
+  .result-eyebrow {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .result-valor {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 900;
+    color: var(--gold-light);
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .result-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .result-desc strong { color: var(--text); }
+
+  /* ── Stat grid ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .stat-box.green-stat  { border-color: rgba(34,197,94,0.2); }
+  .stat-box.accent-stat { border-color: rgba(201,168,76,0.2); }
+  .stat-box.purple-stat { border-color: rgba(167,139,250,0.2); }
+
+  .stat-box-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .stat-box-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stat-box.green-stat  .stat-box-value { color: var(--green); }
+  .stat-box.accent-stat .stat-box-value { color: var(--gold); }
+  .stat-box.purple-stat .stat-box-value { color: var(--purple); }
+
+  /* ── Insight card ── */
+  .insight-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.07), rgba(34,197,94,0.04)) !important;
+    border-color: rgba(201,168,76,0.18) !important;
+  }
+
+  .insight-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .insight-text {
+    font-size: 13.5px;
+    color: var(--text);
+    line-height: 1.75;
+  }
+
+  .insight-text strong { color: var(--gold); }
+
+  /* ── Renda mensal passiva card ── */
+  .renda-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(34,197,94,0.06)) !important;
+    border-color: rgba(201,168,76,0.35) !important;
+  }
+
+  .renda-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .renda-icon {
+    font-size: 32px;
+    line-height: 1;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .renda-eyebrow {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .renda-valor {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 900;
+    color: var(--gold-light);
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .renda-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .renda-info {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .renda-info strong { color: var(--gold); }
+
+  /* ── Chart section ── */
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .chart-header-left { display: flex; flex-direction: column; gap: 6px; }
+
+  .chart-label-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+  }
+
+  .chart-legend {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+    gap: 4px;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .chart-toggle {
+    border-radius: 8px !important;
+  }
+
+  .chart-toggle label {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+  }
+
+  .chart-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 8px 4px;
+  }
+
+  canvas { border-radius: 4px; }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">Educação Financeira</div>
+    <h1>Projeção<br><span class="highlight">Patrimonial</span></h1>
+    <p class="subtitle">Simule sua evolução financeira e descubra quanto tempo ou quanto patrimônio seus investimentos vão gerar.</p>
+  </header>
+
+  <!-- ── MODE SELECTION SCREEN ── -->
+  <div class="mode-screen" id="mode-screen">
+    <p class="mode-question">O que você deseja calcular?</p>
+    <p class="mode-sub">Escolha o tipo de projeção que melhor responde à sua pergunta.</p>
+
+    <div class="mode-cards">
+
+      <!-- Opção A: Quanto terei dado um tempo -->
+      <div class="mode-card mode-tempo" onclick="selectMode('tempo')">
+        <span class="mode-card-icon">📈</span>
+        <div class="mode-card-title">Qual será meu patrimônio?</div>
+        <p class="mode-card-desc">Informe por quantos anos pretende investir e descubra quanto patrimônio você terá acumulado ao final desse período.</p>
+        <div class="mode-card-example">
+          "Se eu investir por 20 anos, quanto terei?"
+        </div>
+        <span class="mode-arrow">→</span>
+      </div>
+
+      <!-- Opção B: Quanto tempo para atingir um valor -->
+      <div class="mode-card mode-valor" onclick="selectMode('valor')">
+        <span class="mode-card-icon">🎯</span>
+        <div class="mode-card-title">Quando atingirei minha meta?</div>
+        <p class="mode-card-desc">Defina um valor de patrimônio que deseja alcançar e descubra em quanto tempo seus investimentos vão chegar lá.</p>
+        <div class="mode-card-example">
+          "Em quanto tempo terei R$ 500.000?"
+        </div>
+        <span class="mode-arrow">→</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CALC SCREEN A: Patrimônio dado o tempo ── -->
+  <div class="calc-screen" id="screen-tempo">
+    <button class="back-btn" onclick="voltarModo()">← Voltar</button>
+
+    <div class="main-grid">
+      <div class="card">
+        <div class="mode-badge gold">📈 Projeção por tempo</div>
+        <div class="section-label">Seus Parâmetros</div>
+
+        <div class="field">
+          <label>Sua idade atual</label>
+          <div class="input-wrap">
+            <input type="number" id="a-idade" min="1" max="99" step="1" placeholder="0" class="no-prefix">
+            <span class="suffix-text">anos</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Idade que quer parar de trabalhar</label>
+          <div class="input-wrap">
+            <input type="number" id="a-parar" min="2" max="100" step="1" placeholder="0" class="no-prefix">
+            <span class="suffix-text">anos</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <label>Aporte Inicial</label>
+          <div class="input-wrap">
+            <span class="prefix">R$</span>
+            <input type="number" id="a-principal" min="0" step="100" placeholder="0">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Aporte Mensal</label>
+          <div class="input-wrap">
+            <span class="prefix">R$</span>
+            <input type="number" id="a-aporte" min="0" step="50" placeholder="0">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <label>Taxa de Juros</label>
+          <div class="toggle-group" style="margin-bottom:10px">
+            <input type="radio" name="a-freq" id="a-mensal" value="mensal">
+            <label for="a-mensal">Mensal</label>
+            <input type="radio" name="a-freq" id="a-anual" value="anual" checked>
+            <label for="a-anual">Anual</label>
+          </div>
+          <div class="input-wrap">
+            <input type="number" id="a-taxa" min="0.01" step="0.1" placeholder="0" class="with-suffix">
+            <span class="percent-suffix">%</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <button class="btn-calc" onclick="calcularPatrimonio()">Calcular Patrimônio</button>
+      </div>
+
+      <div class="results-panel" id="results-a">
+        <div class="section-card" id="empty-a">
+          <div class="empty-state">
+            <div class="empty-icon">📈</div>
+            <p>Preencha os parâmetros e clique em <strong>Calcular Patrimônio</strong> para ver sua projeção.</p>
+          </div>
+        </div>
+
+        <!-- Resultado principal -->
+        <div class="section-card hidden" id="result-a-main">
+          <div class="section-card-header">
+            <div>
+              <div class="result-eyebrow">Seu patrimônio aos <span id="res-a-idade-parar">—</span> anos</div>
+              <div class="result-valor" id="res-a-patrimonio">—</div>
+            </div>
+          </div>
+          <p class="result-desc">Investindo por <strong id="res-a-periodo">—</strong>, com aportes mensais de <strong id="res-a-aporte-fmt">—</strong> e taxa de <strong id="res-a-taxa-fmt">—</strong> ao ano.</p>
+
+          <hr class="divider">
+
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-box-label">Total Investido</div>
+              <div class="stat-box-value" id="res-a-investido">—</div>
+            </div>
+            <div class="stat-box green-stat">
+              <div class="stat-box-label">Juros Ganhos</div>
+              <div class="stat-box-value" id="res-a-juros">—</div>
+            </div>
+            <div class="stat-box accent-stat">
+              <div class="stat-box-label">% do patrimônio que é seu (bolso)</div>
+              <div class="stat-box-value" id="res-a-pct-investido">—</div>
+            </div>
+            <div class="stat-box purple-stat">
+              <div class="stat-box-label">% do patrimônio em juros</div>
+              <div class="stat-box-value" id="res-a-pct-juros">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insight -->
+        <div class="section-card hidden insight-card" id="result-a-insight">
+          <div class="insight-title">💡 O que isso significa?</div>
+          <p class="insight-text" id="res-a-insight-text">—</p>
+        </div>
+
+        <!-- Renda Mensal Passiva -->
+        <div class="section-card hidden renda-card" id="result-a-renda">
+          <div class="renda-header">
+            <div class="renda-icon">💰</div>
+            <div>
+              <div class="renda-eyebrow">Renda mensal passiva aos <span id="res-a-renda-idade">—</span> anos</div>
+              <div class="renda-valor" id="res-a-renda-mensal">—</div>
+              <div class="renda-sub">por mês, sem tocar no patrimônio principal</div>
+            </div>
+          </div>
+          <div class="renda-info">
+            Calculado sobre a taxa mensal de <strong id="res-a-taxa-mensal-fmt">—</strong> aplicada ao patrimônio final de <strong id="res-a-patrimonio-renda">—</strong>.
+          </div>
+        </div>
+
+        <!-- Gráfico -->
+        <div class="section-card hidden" id="result-a-chart">
+          <div class="chart-header">
+            <div class="chart-header-left">
+              <div class="chart-label-title">EVOLUÇÃO PATRIMONIAL</div>
+              <div class="chart-legend">
+                <span class="legend-dot" style="background:#3b82f6"></span> Investido
+                <span class="legend-dot" style="background:#22c55e; margin-left:12px"></span> Juros
+              </div>
+            </div>
+            <div class="toggle-group chart-toggle" style="width:auto">
+              <input type="radio" name="chart-view" id="view-ano" value="ano" checked>
+              <label for="view-ano">Ano a ano</label>
+              <input type="radio" name="chart-view" id="view-mes" value="mes">
+              <label for="view-mes">Mês a mês</label>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-patrimonio" height="260"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CALC SCREEN B: Tempo para atingir um valor ── -->
+  <div class="calc-screen" id="screen-valor">
+    <button class="back-btn" onclick="voltarModo()">← Voltar</button>
+
+    <div class="main-grid green-mode">
+      <div class="card">
+        <div class="mode-badge green">🎯 Projeção por meta</div>
+        <div class="section-label green">Seus Parâmetros</div>
+
+        <div class="field">
+          <label>Sua idade atual</label>
+          <div class="input-wrap">
+            <input type="number" id="b-idade" min="1" max="99" step="1" placeholder="0" class="no-prefix">
+            <span class="suffix-text">anos</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Aporte Inicial</label>
+          <div class="input-wrap">
+            <span class="prefix" style="color:var(--green)">R$</span>
+            <input type="number" id="b-principal" min="0" step="100" placeholder="0">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Aporte Mensal</label>
+          <div class="input-wrap">
+            <span class="prefix" style="color:var(--green)">R$</span>
+            <input type="number" id="b-aporte" min="0" step="50" placeholder="0">
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <label>Taxa de Rentabilidade</label>
+          <div class="toggle-group" style="margin-bottom:10px">
+            <input type="radio" name="b-freq" id="b-mensal" value="mensal">
+            <label for="b-mensal">Mensal</label>
+            <input type="radio" name="b-freq" id="b-anual" value="anual" checked>
+            <label for="b-anual">Anual</label>
+          </div>
+          <div class="input-wrap">
+            <input type="number" id="b-taxa" min="0.01" step="0.1" placeholder="0" class="with-suffix">
+            <span class="percent-suffix" style="color:var(--green)">%</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Tipo de meta -->
+        <div class="field">
+          <label>O que você quer atingir?</label>
+          <div class="toggle-group" style="margin-bottom:14px">
+            <input type="radio" name="b-tipo" id="b-tipo-patrimonio" value="patrimonio" checked onchange="alternarMetaTipo()">
+            <label for="b-tipo-patrimonio">Patrimônio</label>
+            <input type="radio" name="b-tipo" id="b-tipo-renda" value="renda" onchange="alternarMetaTipo()">
+            <label for="b-tipo-renda">Renda mensal</label>
+          </div>
+
+          <!-- Campo patrimônio -->
+          <div id="campo-meta-patrimonio">
+            <label>Patrimônio desejado</label>
+            <div class="input-wrap">
+              <span class="prefix" style="color:var(--green)">R$</span>
+              <input type="number" id="b-meta-patrimonio" min="1" step="1000" placeholder="0">
+            </div>
+          </div>
+
+          <!-- Campo renda mensal -->
+          <div id="campo-meta-renda" class="hidden">
+            <label>Renda mensal desejada</label>
+            <div class="input-wrap">
+              <span class="prefix" style="color:var(--green)">R$</span>
+              <input type="number" id="b-meta-renda" min="1" step="100" placeholder="0">
+            </div>
+            <p style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;">O patrimônio necessário será calculado automaticamente com base na taxa informada.</p>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <button class="btn-calc green-btn" onclick="calcularMeta()">Calcular Tempo</button>
+      </div>
+
+      <div class="results-panel">
+        <div class="section-card" id="empty-b">
+          <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <p>Preencha os parâmetros e clique em <strong>Calcular Tempo</strong> para descobrir quando você atingirá sua meta.</p>
+          </div>
+        </div>
+
+        <!-- Resultado principal B -->
+        <div class="section-card hidden" id="result-b-main">
+          <div class="section-card-header">
+            <div>
+              <div class="result-eyebrow" id="res-b-eyebrow">Você atingirá sua meta</div>
+              <div class="result-valor" style="color:#6ee7b7" id="res-b-idade-texto">—</div>
+            </div>
+          </div>
+          <p class="result-desc" id="res-b-desc">—</p>
+
+          <hr class="divider">
+
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-box-label">Tempo de investimento</div>
+              <div class="stat-box-value" id="res-b-periodo">—</div>
+            </div>
+            <div class="stat-box green-stat">
+              <div class="stat-box-label">Patrimônio atingido</div>
+              <div class="stat-box-value" id="res-b-patrimonio">—</div>
+            </div>
+            <div class="stat-box accent-stat">
+              <div class="stat-box-label">Total investido do bolso</div>
+              <div class="stat-box-value" id="res-b-investido">—</div>
+            </div>
+            <div class="stat-box purple-stat">
+              <div class="stat-box-label">Gerado pelos juros</div>
+              <div class="stat-box-value" id="res-b-juros">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Renda passiva B -->
+        <div class="section-card hidden renda-card" id="result-b-renda">
+          <div class="renda-header">
+            <div class="renda-icon">💰</div>
+            <div>
+              <div class="renda-eyebrow">Renda mensal passiva ao atingir a meta</div>
+              <div class="renda-valor" id="res-b-renda-mensal">—</div>
+              <div class="renda-sub">por mês, sem tocar no patrimônio principal</div>
+            </div>
+          </div>
+          <div class="renda-info">
+            Patrimônio de <strong id="res-b-patrimonio-renda">—</strong> rendendo <strong id="res-b-taxa-mensal-fmt">—</strong> ao mês.
+          </div>
+        </div>
+
+        <!-- Insight B -->
+        <div class="section-card hidden insight-card" id="result-b-insight">
+          <div class="insight-title">💡 O que isso significa?</div>
+          <p class="insight-text" id="res-b-insight-text">—</p>
+        </div>
+
+        <!-- Gráfico B -->
+        <div class="section-card hidden" id="result-b-chart">
+          <div class="chart-header">
+            <div class="chart-header-left">
+              <div class="chart-label-title">EVOLUÇÃO PATRIMONIAL</div>
+              <div class="chart-legend">
+                <span class="legend-dot" style="background:#3b82f6"></span> Investido
+                <span class="legend-dot" style="background:#22c55e; margin-left:12px"></span> Juros
+              </div>
+            </div>
+            <div class="toggle-group chart-toggle" style="width:auto">
+              <input type="radio" name="chart-view-b" id="b-view-ano" value="ano" checked>
+              <label for="b-view-ano">Ano a ano</label>
+              <input type="radio" name="chart-view-b" id="b-view-mes" value="mes">
+              <label for="b-view-mes">Mês a mês</label>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-patrimonio-b" height="260"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Helpers ──
+  function fmt(n) {
+    return n.toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function fmtCompact(n) {
+    if (n >= 1e9) return 'R$ ' + (n/1e9).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' bi';
+    if (n >= 1e6) return 'R$ ' + (n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' mi';
+    return fmt(n);
+  }
+
+  function fmtAxis(n) {
+    if (n >= 1e9) return 'R$' + (n/1e9).toFixed(1).replace('.',',') + 'bi';
+    if (n >= 1e6) return 'R$' + (n/1e6).toFixed(1).replace('.',',') + 'M';
+    if (n >= 1e3) return 'R$' + (n/1e3).toFixed(0) + 'k';
+    return 'R$' + n.toFixed(0);
+  }
+
+  function periodoTexto(anos) {
+    if (anos === 1) return '1 ano';
+    return `${anos} anos`;
+  }
+
+  // ── Navigation ──
+  function selectMode(mode) {
+    document.getElementById('mode-screen').style.display = 'none';
+    if (mode === 'tempo') {
+      document.getElementById('screen-tempo').classList.add('active');
+    } else {
+      document.getElementById('screen-valor').classList.add('active');
+    }
+  }
+
+  function voltarModo() {
+    document.getElementById('screen-tempo').classList.remove('active');
+    document.getElementById('screen-valor').classList.remove('active');
+    document.getElementById('mode-screen').style.display = 'flex';
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  }
+
+  // ── Chart ──
+  let chartInstance = null;
+  let chartDataAnual = null;
+  let chartDataMensal = null;
+
+  function buildChart(labels, investidoData, jurosData) {
+    if (chartInstance) chartInstance.destroy();
+
+    const ctx = document.getElementById('chart-patrimonio').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Investido',
+            data: investidoData,
+            backgroundColor: '#3b82f6',
+            borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
+            borderSkipped: 'bottom',
+            stack: 'patrimonio',
+          },
+          {
+            label: 'Juros',
+            data: jurosData,
+            backgroundColor: '#22c55e',
+            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            borderSkipped: 'bottom',
+            stack: 'patrimonio',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 500, easing: 'easeInOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f1218',
+            borderColor: '#2a3040',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#e2e8f0',
+            padding: 10,
+            callbacks: {
+              label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid:   { color: 'rgba(255,255,255,0.04)' },
+            border: { color: '#2a3040' },
+            ticks:  { color: '#6b7280', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 20 },
+          },
+          y: {
+            stacked: true,
+            grid:   { color: 'rgba(255,255,255,0.05)' },
+            border: { color: '#2a3040' },
+            beginAtZero: true,
+            ticks: { color: '#6b7280', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 7, callback: v => fmtAxis(v) },
+          }
+        }
+      }
+    });
+  }
+
+  function renderChart(view) {
+    if (!chartDataAnual) return;
+    if (view === 'ano') {
+      buildChart(chartDataAnual.labels, chartDataAnual.investido, chartDataAnual.juros);
+    } else {
+      buildChart(chartDataMensal.labels, chartDataMensal.investido, chartDataMensal.juros);
+    }
+  }
+
+  // ── MODO A: Calcular patrimônio dado as idades ──
+  function calcularPatrimonio() {
+    const idadeAtual = parseInt(document.getElementById('a-idade').value);
+    const idadeParar = parseInt(document.getElementById('a-parar').value);
+    const principal  = parseFloat(document.getElementById('a-principal').value) || 0;
+    const aporte     = parseFloat(document.getElementById('a-aporte').value)    || 0;
+    const taxa       = parseFloat(document.getElementById('a-taxa').value)      || 0;
+    const freqTaxa   = document.querySelector('input[name="a-freq"]:checked').value;
+
+    if (!idadeAtual || idadeAtual < 1 || idadeAtual > 99) {
+      alert('Informe sua idade atual (entre 1 e 99 anos).'); return;
+    }
+    if (!idadeParar || idadeParar <= idadeAtual) {
+      alert('A idade para parar de trabalhar deve ser maior que sua idade atual.'); return;
+    }
+    if (taxa <= 0) {
+      alert('Informe uma taxa de juros válida.'); return;
+    }
+    if (principal + aporte <= 0) {
+      alert('Informe um aporte inicial ou aporte mensal.'); return;
+    }
+
+    const anos   = idadeParar - idadeAtual;
+    const meses  = anos * 12;
+
+    const taxaMensal = freqTaxa === 'anual'
+      ? Math.pow(1 + taxa / 100, 1 / 12) - 1
+      : taxa / 100;
+
+    const taxaAnual = freqTaxa === 'anual'
+      ? taxa
+      : (Math.pow(1 + taxa / 100, 12) - 1) * 100;
+
+    // Simulação mês a mês, guardando série completa
+    const serieMensal = [];
+    let saldo = principal;
+    for (let i = 1; i <= meses; i++) {
+      saldo = saldo * (1 + taxaMensal) + aporte;
+      const investidoAcum = principal + aporte * i;
+      const jurosAcum     = saldo - investidoAcum;
+      serieMensal.push({ mes: i, saldo, investido: investidoAcum, juros: Math.max(0, jurosAcum) });
+    }
+
+    const totalInvestido = principal + aporte * meses;
+    const jurosGanhos    = saldo - totalInvestido;
+    const pctJuros       = saldo > 0 ? (jurosGanhos / saldo) * 100 : 0;
+    const pctInvestido   = 100 - pctJuros;
+
+    // Preenche resultados de texto
+    document.getElementById('res-a-idade-parar').textContent  = idadeParar;
+    document.getElementById('res-a-patrimonio').textContent   = fmtCompact(saldo);
+    document.getElementById('res-a-periodo').textContent      = periodoTexto(anos);
+    document.getElementById('res-a-aporte-fmt').textContent   = fmt(aporte);
+    document.getElementById('res-a-taxa-fmt').textContent     = taxaAnual.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
+    document.getElementById('res-a-investido').textContent    = fmt(totalInvestido);
+    document.getElementById('res-a-juros').textContent        = fmt(jurosGanhos);
+    document.getElementById('res-a-pct-investido').textContent = pctInvestido.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+    document.getElementById('res-a-pct-juros').textContent    = pctJuros.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%';
+
+    // Insight
+    const parcelaJuros     = Math.round(pctJuros);
+    const parcelaInvestido = Math.round(pctInvestido);
+    let insightHTML = `Você vai investir <strong>${fmt(totalInvestido)}</strong> ao longo de <strong>${periodoTexto(anos)}</strong>. `;
+    insightHTML += `Os juros compostos vão trabalhar por você e gerar <strong>${fmt(jurosGanhos)}</strong> em rendimentos — `;
+    insightHTML += `ou seja, <strong>${parcelaJuros}% do seu patrimônio final virá dos juros</strong>, `;
+    insightHTML += `e apenas <strong>${parcelaInvestido}%</strong> do que você efetivamente colocou do próprio bolso. `;
+    const multiplo = totalInvestido > 0 ? saldo / totalInvestido : 0;
+    if (multiplo >= 3) {
+      insightHTML += `Seu dinheiro vai crescer <strong>${multiplo.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})} vezes</strong> — isso é o poder dos juros compostos ao longo do tempo.`;
+    } else {
+      insightHTML += `Quanto mais cedo você começar, maior será esse efeito multiplicador.`;
+    }
+    document.getElementById('res-a-insight-text').innerHTML = insightHTML;
+
+    // Prepara dados do gráfico anual
+    const labelsAnual = [], investidoAnual = [], jurosAnual = [];
+    for (let a = 1; a <= anos; a++) {
+      const ponto = serieMensal[a * 12 - 1];
+      labelsAnual.push(`Ano ${a}`);
+      investidoAnual.push(parseFloat(ponto.investido.toFixed(2)));
+      jurosAnual.push(parseFloat(ponto.juros.toFixed(2)));
+    }
+    chartDataAnual = { labels: labelsAnual, investido: investidoAnual, juros: jurosAnual };
+
+    // Prepara dados do gráfico mensal (amostragem inteligente se muitos meses)
+    const labelsM = [], investidoM = [], jurosM = [];
+    const step = meses > 120 ? Math.ceil(meses / 120) : 1;
+    for (let i = step - 1; i < meses; i += step) {
+      const p = serieMensal[i];
+      labelsM.push(`Mês ${p.mes}`);
+      investidoM.push(parseFloat(p.investido.toFixed(2)));
+      jurosM.push(parseFloat(p.juros.toFixed(2)));
+    }
+    // Garante que o último mês aparece
+    const ultimo = serieMensal[meses - 1];
+    if (labelsM[labelsM.length - 1] !== `Mês ${ultimo.mes}`) {
+      labelsM.push(`Mês ${ultimo.mes}`);
+      investidoM.push(parseFloat(ultimo.investido.toFixed(2)));
+      jurosM.push(parseFloat(ultimo.juros.toFixed(2)));
+    }
+    chartDataMensal = { labels: labelsM, investido: investidoM, juros: jurosM };
+
+    // Renda mensal passiva (juros do saldo final sem novos aportes)
+    const rendaMensal = saldo * taxaMensal;
+    document.getElementById('res-a-renda-idade').textContent      = idadeParar;
+    document.getElementById('res-a-renda-mensal').textContent     = fmt(rendaMensal);
+    document.getElementById('res-a-taxa-mensal-fmt').textContent  = (taxaMensal * 100).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}) + '% a.m.';
+    document.getElementById('res-a-patrimonio-renda').textContent = fmtCompact(saldo);
+
+    // Mostra resultados
+    document.getElementById('empty-a').classList.add('hidden');
+    document.getElementById('result-a-main').classList.remove('hidden');
+    document.getElementById('result-a-insight').classList.remove('hidden');
+    document.getElementById('result-a-renda').classList.remove('hidden');
+    document.getElementById('result-a-chart').classList.remove('hidden');
+
+    // Reset toggle para "Ano a ano" e renderiza
+    document.getElementById('view-ano').checked = true;
+    renderChart('ano');
+
+    // Listener do toggle
+    document.querySelectorAll('input[name="chart-view"]').forEach(r => {
+      r.onchange = () => renderChart(r.value);
+    });
+  }
+
+  // ── Toggle tipo de meta (patrimônio / renda) ──
+  function alternarMetaTipo() {
+    const tipo = document.querySelector('input[name="b-tipo"]:checked').value;
+    document.getElementById('campo-meta-patrimonio').classList.toggle('hidden', tipo !== 'patrimonio');
+    document.getElementById('campo-meta-renda').classList.toggle('hidden', tipo !== 'renda');
+  }
+
+  // ── Chart B ──
+  let chartInstanceB = null;
+  let chartDataAnualB = null;
+  let chartDataMensalB = null;
+
+  function buildChartB(labels, investidoData, jurosData) {
+    if (chartInstanceB) chartInstanceB.destroy();
+    const ctx = document.getElementById('chart-patrimonio-b').getContext('2d');
+    chartInstanceB = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Investido',
+            data: investidoData,
+            backgroundColor: '#3b82f6',
+            borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
+            borderSkipped: 'bottom',
+            stack: 'patrimonio',
+          },
+          {
+            label: 'Juros',
+            data: jurosData,
+            backgroundColor: '#22c55e',
+            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            borderSkipped: 'bottom',
+            stack: 'patrimonio',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 500, easing: 'easeInOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f1218',
+            borderColor: '#2a3040',
+            borderWidth: 1,
+            titleColor: '#e2e8f0',
+            bodyColor: '#e2e8f0',
+            padding: 10,
+            callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid:   { color: 'rgba(255,255,255,0.04)' },
+            border: { color: '#2a3040' },
+            ticks:  { color: '#6b7280', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 20 },
+          },
+          y: {
+            stacked: true,
+            grid:   { color: 'rgba(255,255,255,0.05)' },
+            border: { color: '#2a3040' },
+            beginAtZero: true,
+            ticks: { color: '#6b7280', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 7, callback: v => fmtAxis(v) },
+          }
+        }
+      }
+    });
+  }
+
+  function renderChartB(view) {
+    if (!chartDataAnualB) return;
+    if (view === 'ano') buildChartB(chartDataAnualB.labels, chartDataAnualB.investido, chartDataAnualB.juros);
+    else               buildChartB(chartDataMensalB.labels, chartDataMensalB.investido, chartDataMensalB.juros);
+  }
+
+  // ── Helper: formata meses em texto legível ──
+  function mesesTexto(m) {
+    if (m < 12) return `${m} ${m === 1 ? 'mês' : 'meses'}`;
+    const anos = Math.floor(m / 12), resto = m % 12;
+    let txt = `${anos} ${anos === 1 ? 'ano' : 'anos'}`;
+    if (resto > 0) txt += ` e ${resto} ${resto === 1 ? 'mês' : 'meses'}`;
+    return txt;
+  }
+
+  // ── MODO B: Calcular tempo para atingir meta ──
+  function calcularMeta() {
+    const idadeAtual = parseInt(document.getElementById('b-idade').value);
+    const principal  = parseFloat(document.getElementById('b-principal').value) || 0;
+    const aporte     = parseFloat(document.getElementById('b-aporte').value)    || 0;
+    const taxa       = parseFloat(document.getElementById('b-taxa').value)      || 0;
+    const freqTaxa   = document.querySelector('input[name="b-freq"]:checked').value;
+    const tipoMeta   = document.querySelector('input[name="b-tipo"]:checked').value;
+
+    // Validações básicas
+    if (!idadeAtual || idadeAtual < 1 || idadeAtual > 99) {
+      alert('Informe sua idade atual (entre 1 e 99 anos).'); return;
+    }
+    if (taxa <= 0) {
+      alert('Informe uma taxa de rentabilidade válida.'); return;
+    }
+    if (principal + aporte <= 0) {
+      alert('Informe um aporte inicial ou aporte mensal.'); return;
+    }
+
+    const taxaMensal = freqTaxa === 'anual'
+      ? Math.pow(1 + taxa / 100, 1 / 12) - 1
+      : taxa / 100;
+
+    const taxaAnual = freqTaxa === 'anual'
+      ? taxa
+      : (Math.pow(1 + taxa / 100, 12) - 1) * 100;
+
+    // Determina a meta de patrimônio
+    let metaPatrimonio = 0;
+    let metaRenda = 0;
+    let labelMeta = '';
+
+    if (tipoMeta === 'patrimonio') {
+      metaPatrimonio = parseFloat(document.getElementById('b-meta-patrimonio').value) || 0;
+      if (metaPatrimonio <= 0) { alert('Informe o patrimônio desejado.'); return; }
+      if (metaPatrimonio <= principal) { alert('O patrimônio desejado deve ser maior que o aporte inicial.'); return; }
+      labelMeta = `patrimônio de ${fmtCompact(metaPatrimonio)}`;
+    } else {
+      metaRenda = parseFloat(document.getElementById('b-meta-renda').value) || 0;
+      if (metaRenda <= 0) { alert('Informe a renda mensal desejada.'); return; }
+      // Patrimônio necessário = renda desejada / taxa mensal
+      metaPatrimonio = metaRenda / taxaMensal;
+      labelMeta = `renda mensal de ${fmt(metaRenda)}`;
+    }
+
+    // Simulação mês a mês até atingir a meta (limite 100 anos = 1200 meses)
+    const MAX_MESES = 1200;
+    const serieMensal = [];
+    let saldo = principal;
+    let mesMeta = null;
+
+    for (let i = 1; i <= MAX_MESES; i++) {
+      saldo = saldo * (1 + taxaMensal) + aporte;
+      const investidoAcum = principal + aporte * i;
+      const jurosAcum     = Math.max(0, saldo - investidoAcum);
+      serieMensal.push({ mes: i, saldo, investido: investidoAcum, juros: jurosAcum });
+      if (saldo >= metaPatrimonio && mesMeta === null) { mesMeta = i; }
+    }
+
+    if (mesMeta === null) {
+      alert('Com esses parâmetros a meta excede 100 anos. Revise os valores.'); return;
+    }
+
+    const dadosMeta     = serieMensal[mesMeta - 1];
+    const patrimonioFinal = dadosMeta.saldo;
+    const totalInvestido  = dadosMeta.investido;
+    const jurosGanhos     = dadosMeta.juros;
+    const rendaMensal     = patrimonioFinal * taxaMensal;
+    const idadeMeta       = idadeAtual + Math.floor(mesMeta / 12);
+    const anosInvestimento = Math.floor(mesMeta / 12);
+    const mesesResto       = mesMeta % 12;
+
+    // Preenche resultados
+    document.getElementById('res-b-eyebrow').textContent = tipoMeta === 'patrimonio'
+      ? `Você atingirá seu patrimônio desejado`
+      : `Você atingirá sua renda mensal desejada`;
+
+    document.getElementById('res-b-idade-texto').textContent = `aos ${idadeMeta} anos`;
+
+    const periodoStr = mesesTexto(mesMeta);
+    document.getElementById('res-b-desc').innerHTML =
+      `Em <strong>${periodoStr}</strong> de investimentos você atingirá ${labelMeta}, com taxa de <strong>${taxaAnual.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}% ao ano</strong>.`;
+
+    document.getElementById('res-b-periodo').textContent    = periodoStr;
+    document.getElementById('res-b-patrimonio').textContent = fmtCompact(patrimonioFinal);
+    document.getElementById('res-b-investido').textContent  = fmt(totalInvestido);
+    document.getElementById('res-b-juros').textContent      = fmt(jurosGanhos);
+
+    // Renda passiva
+    document.getElementById('res-b-renda-mensal').textContent    = fmt(rendaMensal);
+    document.getElementById('res-b-patrimonio-renda').textContent = fmtCompact(patrimonioFinal);
+    document.getElementById('res-b-taxa-mensal-fmt').textContent  =
+      (taxaMensal * 100).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}) + '% a.m.';
+
+    // Insight
+    const pctJuros     = patrimonioFinal > 0 ? Math.round((jurosGanhos / patrimonioFinal) * 100) : 0;
+    const pctInvestido = 100 - pctJuros;
+    let insightHTML = '';
+    if (tipoMeta === 'renda') {
+      insightHTML += `Para receber <strong>${fmt(metaRenda)}</strong> por mês sem tocar no principal, você precisa de um patrimônio de <strong>${fmtCompact(metaPatrimonio)}</strong> — `;
+      insightHTML += `e isso levará <strong>${periodoStr}</strong>. `;
+    } else {
+      insightHTML += `Para atingir <strong>${fmtCompact(metaPatrimonio)}</strong> você precisará de <strong>${periodoStr}</strong>. `;
+    }
+    insightHTML += `Do patrimônio final, <strong>${pctJuros}% virão dos juros</strong> e apenas <strong>${pctInvestido}% do seu próprio bolso</strong>. `;
+    insightHTML += `Ao atingir a meta, seu patrimônio vai gerar uma renda passiva de <strong>${fmt(rendaMensal)} por mês</strong> — sem precisar trabalhar para isso.`;
+    document.getElementById('res-b-insight-text').innerHTML = insightHTML;
+
+    // Prepara dados gráfico anual
+    const labelsAnual = [], investidoAnual = [], jurosAnual = [];
+    const anosTotal = Math.ceil(mesMeta / 12);
+    for (let a = 1; a <= anosTotal; a++) {
+      const idx = Math.min(a * 12 - 1, mesMeta - 1);
+      const p = serieMensal[idx];
+      labelsAnual.push(`Ano ${a}`);
+      investidoAnual.push(parseFloat(p.investido.toFixed(2)));
+      jurosAnual.push(parseFloat(p.juros.toFixed(2)));
+    }
+    chartDataAnualB = { labels: labelsAnual, investido: investidoAnual, juros: jurosAnual };
+
+    // Prepara dados gráfico mensal
+    const labelsM = [], investidoM = [], jurosM = [];
+    const step = mesMeta > 120 ? Math.ceil(mesMeta / 120) : 1;
+    for (let i = step - 1; i < mesMeta; i += step) {
+      const p = serieMensal[i];
+      labelsM.push(`Mês ${p.mes}`);
+      investidoM.push(parseFloat(p.investido.toFixed(2)));
+      jurosM.push(parseFloat(p.juros.toFixed(2)));
+    }
+    const ult = serieMensal[mesMeta - 1];
+    if (labelsM[labelsM.length - 1] !== `Mês ${ult.mes}`) {
+      labelsM.push(`Mês ${ult.mes}`);
+      investidoM.push(parseFloat(ult.investido.toFixed(2)));
+      jurosM.push(parseFloat(ult.juros.toFixed(2)));
+    }
+    chartDataMensalB = { labels: labelsM, investido: investidoM, juros: jurosM };
+
+    // Exibe resultados
+    document.getElementById('empty-b').classList.add('hidden');
+    document.getElementById('result-b-main').classList.remove('hidden');
+    document.getElementById('result-b-renda').classList.remove('hidden');
+    document.getElementById('result-b-insight').classList.remove('hidden');
+    document.getElementById('result-b-chart').classList.remove('hidden');
+
+    // Reset toggle e renderiza
+    document.getElementById('b-view-ano').checked = true;
+    renderChartB('ano');
+    document.querySelectorAll('input[name="chart-view-b"]').forEach(r => {
+      r.onchange = () => renderChartB(r.value);
+    });
+  }
+</script>
+</body>
+</html>
