@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paulo Denis Investe — Calculadoras Financeiras</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: #1e2330;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --green: #22c55e;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --purple: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 0% 0%, rgba(201,168,76,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 100%, rgba(34,197,94,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(167,139,250,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 64px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 72px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .logo-area {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 8px 20px;
+  }
+
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(201,168,76,0.6);
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  .logo-text {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 900;
+    line-height: 1.08;
+    color: var(--text);
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--gold);
+    position: relative;
+  }
+
+  h1 em::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    border-radius: 2px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ── Section label ── */
+  .section-eyebrow {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease 0.2s both;
+  }
+
+  /* ── Cards grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 64px;
+  }
+
+  .calc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px 32px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .calc-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 23px;
+  }
+
+  .calc-card.gold-card::before {
+    background: radial-gradient(ellipse 100% 80% at 50% -20%, rgba(201,168,76,0.12), transparent);
+  }
+
+  .calc-card.green-card::before {
+    background: radial-gradient(ellipse 100% 80% at 50% -20%, rgba(34,197,94,0.1), transparent);
+  }
+
+  .calc-card:hover {
+    transform: translateY(-6px);
+  }
+
+  .calc-card.gold-card:hover {
+    border-color: rgba(201,168,76,0.5);
+    box-shadow: 0 20px 60px rgba(201,168,76,0.12);
+  }
+
+  .calc-card.green-card:hover {
+    border-color: rgba(34,197,94,0.4);
+    box-shadow: 0 20px 60px rgba(34,197,94,0.1);
+  }
+
+  .calc-card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+    display: block;
+    line-height: 1;
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+    width: fit-content;
+  }
+
+  .gold-card .card-tag {
+    background: rgba(201,168,76,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.25);
+  }
+
+  .green-card .card-tag {
+    background: rgba(34,197,94,0.1);
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.2);
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+
+  .gold-card .card-title { color: var(--gold-light); }
+  .green-card .card-title { color: #6ee7b7; }
+
+  .card-desc {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    flex: 1;
+  }
+
+  .card-features {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 28px;
+  }
+
+  .card-feature {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .feature-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .gold-card .feature-dot { background: var(--gold); }
+  .green-card .feature-dot { background: var(--green); }
+
+  .card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+
+  .gold-card .card-cta {
+    background: rgba(201,168,76,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.25);
+  }
+
+  .green-card .card-cta {
+    background: rgba(34,197,94,0.1);
+    color: var(--green);
+    border: 1px solid rgba(34,197,94,0.2);
+  }
+
+  .calc-card:hover .card-cta {
+    letter-spacing: 0.07em;
+  }
+
+  .cta-arrow {
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+
+  .calc-card:hover .cta-arrow { transform: translateX(5px); }
+
+  /* ── Info strip ── */
+  .info-strip {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 28px 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    animation: fadeUp 0.6s ease 0.5s both;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .info-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+
+  .info-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+
+  .info-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    font-size: 12px;
+    color: var(--muted);
+    animation: fadeUp 0.6s ease 0.6s both;
+    line-height: 1.8;
+  }
+
+  footer a { color: var(--gold); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Animations ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .info-strip { gap: 24px; padding: 20px; }
+    .info-divider { display: none; }
+    .calc-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-area">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Paulo Denis Investe</span>
+    </div>
+
+    <h1>Ferramentas para<br>sua <em>liberdade financeira</em></h1>
+    <p class="subtitle">Simuladores gratuitos para você visualizar o poder dos juros compostos e planejar sua jornada de investimentos com clareza.</p>
+  </header>
+
+  <div class="section-eyebrow">Escolha uma calculadora</div>
+
+  <div class="cards-grid">
+
+    <!-- Card 1: Juros Compostos -->
+    <a href="calculadora-juros.html" class="calc-card gold-card" style="animation-delay: 0.25s; border-color: rgba(59,130,246,0.2);">
+      <span class="card-icon">💹</span>
+      <div class="card-tag" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.2)">Juros Compostos</div>
+      <div class="card-title" style="color:#93c5fd">Calculadora de Juros Compostos</div>
+      <p class="card-desc">Simule o crescimento do seu capital com juros compostos e visualize a evolução do seu patrimônio mês a mês.</p>
+      <div class="card-features">
+        <div class="card-feature"><div class="feature-dot" style="background:#3b82f6"></div> Valor inicial e aportes mensais</div>
+        <div class="card-feature"><div class="feature-dot" style="background:#3b82f6"></div> Taxa mensal ou anual</div>
+        <div class="card-feature"><div class="feature-dot" style="background:#3b82f6"></div> Tabela de evolução detalhada</div>
+        <div class="card-feature"><div class="feature-dot" style="background:#3b82f6"></div> Gráfico interativo</div>
+      </div>
+      <div class="card-cta" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.2)">
+        <span>Acessar calculadora</span>
+        <span class="cta-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- Card 2: Primeiro Milhão -->
+    <a href="calculadora-primeiro-milhao.html" class="calc-card gold-card" style="animation-delay: 0.35s">
+      <span class="card-icon">🏔️</span>
+      <div class="card-tag">Juros Compostos</div>
+      <div class="card-title">A Jornada ao Primeiro Milhão</div>
+      <p class="card-desc">Descubra como os juros compostos aceleram cada etapa do seu caminho e por que o tempo é o seu maior aliado.</p>
+      <div class="card-features">
+        <div class="card-feature"><div class="feature-dot"></div> Evolução em grupos de R$ 10.000</div>
+        <div class="card-feature"><div class="feature-dot"></div> Evolução em grupos de R$ 100.000</div>
+        <div class="card-feature"><div class="feature-dot"></div> O poder da exponencialidade</div>
+        <div class="card-feature"><div class="feature-dot"></div> Gráficos interativos</div>
+      </div>
+      <div class="card-cta">
+        <span>Acessar calculadora</span>
+        <span class="cta-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- Card 3: Projeção Patrimonial -->
+    <a href="calculadora-projecao.html" class="calc-card green-card" style="animation-delay: 0.45s">
+      <span class="card-icon">🎯</span>
+      <div class="card-tag">Projeção Patrimonial</div>
+      <div class="card-title">Planeje sua Independência Financeira</div>
+      <p class="card-desc">Saiba quanto patrimônio você terá na idade que deseja parar de trabalhar — ou descubra quando atingirá sua meta.</p>
+      <div class="card-features">
+        <div class="card-feature"><div class="feature-dot"></div> Projeção por idade de aposentadoria</div>
+        <div class="card-feature"><div class="feature-dot"></div> Meta de patrimônio ou renda mensal</div>
+        <div class="card-feature"><div class="feature-dot"></div> Renda passiva mensal projetada</div>
+        <div class="card-feature"><div class="feature-dot"></div> Evolução ano a ano com gráfico</div>
+      </div>
+      <div class="card-cta">
+        <span>Acessar calculadora</span>
+        <span class="cta-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="info-strip">
+    <div class="info-item">
+      <div class="info-value">3</div>
+      <div class="info-label">Calculadoras<br>disponíveis</div>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-item">
+      <div class="info-value">100%</div>
+      <div class="info-label">Gratuito<br>e sem cadastro</div>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-item">
+      <div class="info-value">∞</div>
+      <div class="info-label">Simulações<br>ilimitadas</div>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-item">
+      <div class="info-value">BR</div>
+      <div class="info-label">Valores em<br>Reais (R$)</div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Desenvolvido por <a href="#">Paulo Denis Investe</a> · Educação financeira gratuita</p>
+    <p style="margin-top:6px; font-size:11px;">As simulações são meramente educativas e não constituem recomendação de investimento.</p>
+  </footer>
+
+</div>
+</body>
+</html>
